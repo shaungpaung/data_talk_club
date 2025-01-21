@@ -20,5 +20,37 @@ docker run -it \
     --name pgadmin \
     dpage/pgadmin4
 
+jupyter nbconvert --to=script upload_data.ipynb
 
 docker pull dpage/pgadmin4
+
+URL="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet"
+python ingest_data.py \
+    --user=root \
+    --password=root \
+    --host=localhost \
+    --port=5432 \
+    --db=ny_taxi \
+    --table_name=yellow_taxi_data \
+    --url=${URL}
+
+docker build -t taxi_ingest:v001 .
+
+URL="https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet"
+docker run -it taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=localhost \
+    --port=5432 \
+    --db=ny_taxi \
+    --table_name=yellow_taxi_data \
+    --url=${URL}
+
+docker run --network="host" -it taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=localhost \
+    --port=5432 \
+    --db=ny_taxi \
+    --table_name=yellow_taxi_data \
+    --url=${URL}
